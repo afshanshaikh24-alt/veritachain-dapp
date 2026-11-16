@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verifiable Data Solutions | Ethereum Credential Registry</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #1a202c;
+            --bg-light: #2d3748;
+            --text-primary: #edf2f7;
+            --text-secondary: #a0aec0;
+            --accent-green: #48bb78;
+            --accent-blue: #4299e1;
+            --gradient-start: #3B82F6;
+            --gradient-end: #6366F1;
+            --error-red: #e53e3e;
+            --warning-yellow: #d69e2e;
+        }
+        body { font-family: 'Poppins', sans-serif; background-color: var(--bg-dark); color: var(--text-primary); line-height: 1.6; }
+        .container { max-width: 1100px; margin: auto; padding: 0 20px; }
+        header { background: var(--bg-dark); padding: 1rem 0; border-bottom: 1px solid var(--bg-light); position: sticky; top: 0; z-index: 100; }
+        nav { display: flex; justify-content: space-between; align-items: center; }
+        .logo { font-size: 1.5rem; font-weight: 700; }
+        .logo span { color: var(--accent-green); }
+        .btn { display: inline-block; background: var(--accent-green); color: #fff; padding: 0.7rem 1.5rem; border-radius: 5px; text-decoration: none; font-weight: 600; transition: all 0.3s; border: none; cursor: pointer; }
+        .btn:hover { background: #38a169; transform: translateY(-2px); }
+        .btn-blue { background: var(--accent-blue); }
+        .btn-blue:hover { background: #3182ce; }
+        .btn-red { background: var(--error-red); }
+        .btn-red:hover { background: #c53030; }
+        .wallet-container { display: flex; align-items: center; gap: 1rem; }
+        #wallet-info { color: var(--text-secondary); font-size: 0.9rem; text-align: right; }
+        .hero { padding: 4rem 0; text-align: center; }
+        .hero h1 { font-size: 3.5rem; margin-bottom: 1rem; }
+        .hero p { font-size: 1.3rem; max-width: 700px; margin: 0 auto 1.5rem; }
+        .app-container { background-color: var(--bg-light); border-radius: 12px; padding: 2rem; max-width: 700px; margin: 2rem auto; box-shadow: 0 10px 25px rgba(0,0,0,0.3); }
+        .tabs { display: flex; border-bottom: 1px solid var(--text-secondary); margin-bottom: 2rem; }
+        .tab { padding: 1rem 1.5rem; cursor: pointer; font-size: 1.1rem; font-weight: 600; color: var(--text-secondary); transition: all 0.3s; }
+        .tab.active { color: var(--accent-green); border-bottom: 3px solid var(--accent-green); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        
+        /* Metadata Form Inputs matching the dark theme */
+        .metadata-form { display: flex; flex-direction: column; gap: 1rem; margin-bottom: 1.5rem; text-align: left; }
+        .input-row { display: flex; gap: 1rem; }
+        .input-group { flex: 1; display: flex; flex-direction: column; }
+        .input-group label { font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.3rem; font-weight: 600; }
+        .input-group input {
+            background-color: var(--bg-dark);
+            border: 1px solid var(--text-secondary);
+            color: var(--text-primary);
+            padding: 0.75rem 1rem;
+            border-radius: 6px;
+            font-family: 'Poppins', sans-serif;
+            font-size: 0.95rem;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+        .input-group input:focus { border-color: var(--accent-green); }
+        .input-group input:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .upload-box { margin: 0 auto; padding: 2.5rem; border-radius: 12px; border: 2px dashed var(--text-secondary); cursor: pointer; transition: all 0.3s; text-align: center; }
+        .upload-box.disabled { cursor: not-allowed; background: #222b3b; }
+        .upload-box:hover:not(.disabled) { border-color: var(--accent-green); background: #3c4a60; }
+        .upload-box.revoke-box:hover:not(.disabled) { border-color: var(--error-red); background: #3c323b; }
+        .upload-box p { font-size: 1.1rem; margin: 0; }
+        #file-input-notarize, #file-input-verify, #file-input-revoke { display: none; }
+        
+        .result-message { margin-top: 2rem; padding: 1.2rem; border-radius: 8px; margin-left: auto; margin-right: auto; display: none; word-wrap: break-word; text-align: left; }
+        .result-message.success { background-color: #2f855a; border: 1px solid var(--accent-green); color: #fff; }
+        .result-message.error { background-color: #9b2c2c; border: 1px solid var(--error-red); color: #fff; }
+        .result-message.warning { background-color: #975a16; border: 1px solid var(--warning-yellow); color: #fff; }
+        .result-message.info { background-color: #2b6cb0; border: 1px solid var(--accent-blue); color: #fff; text-align: center; }
+        .result-message a { color: #fff; text-decoration: underline; }
+        .cred-details { margin-top: 0.8rem; padding-top: 0.8rem; border-top: 1px solid rgba(255,255,255,0.25); font-size: 0.92rem; line-height: 1.7; }
+        
+        .config-warning { text-align: center; padding: 1rem; background: #c05621; color: white; font-weight: 600; border-radius: 8px; margin-bottom: 2rem; }
+        .loader { border: 4px solid #f3f3f3; border-top: 4px solid var(--accent-green); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 2rem auto; display: none; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        footer { text-align: center; padding: 3rem 0; margin-top: 4rem; border-top: 1px solid var(--bg-light); color: var(--text-secondary); }
+        .footer-links a { color: var(--accent-blue); text-decoration: none; margin: 0 1rem; font-weight: 600; }
+        .footer-links a:hover { text-decoration: underline; }
+        .network-info { text-align: center; padding: 0.5rem; background: #2d3748; border-radius: 5px; margin: 1rem 0; font-size: 0.9rem; }
+        @media (max-width: 600px) { .input-row { flex-direction: column; } }
+    </style>
+    <!-- Ethers.js library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.8.0/ethers.umd.min.js"></script>
+</head>
+<body>
+    <header>
+        <nav class="container">
+            <div class="logo">Verifiable<span>Data</span></div>
+            <div class="wallet-container">
+                <div id="wallet-info">
+                    <span>Wallet not connected</span>
+                </div>
+                <button id="connect-wallet-btn" class="btn btn-blue">Connect</button>
+            </div>
+        </nav>
+    </header>
+
+    <section class="hero">
+        <div class="container">
+            <h1>The Standard for Digital Trust</h1>
+            <p>Issue, verify, and revoke academic credentials with tamper-proof SHA-256 hashing on the Ethereum Blockchain.</p>
+            <div class="network-info">
+                Network: <strong id="current-network">Not connected</strong>
+            </div>
+        </div>
+    </section>
+
+    <main class="app-container">
+        <div id="config-warning" class="config-warning" style="display: none;">
+            <strong>Configuration Needed:</strong> Please paste your deployed <code>CredentialRegistry</code> contract address into the <code>NOTARY_CONTRACT_ADDRESS</code> variable inside <code>index.html</code>.
+        </div>
+        
+        <div id="network-warning" class="config-warning" style="display: none; background: #e53e3e;">
+            <strong>Wrong Network:</strong> Please switch MetaMask to Ethereum Sepolia Testnet to use this application.
+        </div>
+
+        <div class="tabs">
+            <div class="tab active" data-tab="notarize">Issue Credential</div>
+            <div class="tab" data-tab="verify">Verify</div>
+            <div class="tab" data-tab="revoke">Revoke</div>
+        </div>
+
+        <!-- Issue / Notarize Tab Content -->
+        <div id="notarize-content" class="tab-content active">
+            <h2 style="text-align:center; margin-bottom: 1.5rem;">Issue Academic Credential</h2>
+            
+            <div class="metadata-form">
+                <div class="input-row">
+                    <div class="input-group">
+                        <label for="student-name">Student Full Name *</label>
+                        <input type="text" id="student-name" placeholder="e.g., Afshan Shaikh" disabled>
+                    </div>
+                    <div class="input-group">
+                        <label for="student-prn">PRN / Roll Number *</label>
+                        <input type="text" id="student-prn" placeholder="e.g., 12410089" disabled>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label for="degree-title">Degree / Course Title *</label>
+                    <input type="text" id="degree-title" placeholder="e.g., B.Tech Computer Engineering" disabled>
+                </div>
+            </div>
+
+            <div id="upload-box-notarize" class="upload-box disabled">
+                <p id="upload-text-notarize">Connect your wallet to begin</p>
+            </div>
+            <input type="file" id="file-input-notarize" disabled>
+            <div id="loader-notarize" class="loader"></div>
+            <div id="result-message-notarize" class="result-message"></div>
+        </div>
+
+        <!-- Verify Tab Content -->
+        <div id="verify-content" class="tab-content">
+            <h2 style="text-align:center; margin-bottom: 1.5rem;">Verify a Credential</h2>
+            <div id="upload-box-verify" class="upload-box disabled">
+                <p id="upload-text-verify">Connect your wallet to begin</p>
+            </div>
+            <input type="file" id="file-input-verify" disabled>
+            <div id="loader-verify" class="loader"></div>
+            <div id="result-message-verify" class="result-message"></div>
+        </div>
+
+        <!-- Revoke Tab Content -->
+        <div id="revoke-content" class="tab-content">
+            <h2 style="text-align:center; margin-bottom: 1.5rem;">Revoke a Credential</h2>
+            <p style="text-align:center; color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1.5rem;">
+                Upload an issued certificate to permanently mark it as revoked on-chain (Authorized Issuers only).
+            </p>
+            <div id="upload-box-revoke" class="upload-box revoke-box disabled">
+                <p id="upload-text-revoke">Connect your wallet to begin</p>
+            </div>
+            <input type="file" id="file-input-revoke" disabled>
+            <div id="loader-revoke" class="loader"></div>
+            <div id="result-message-revoke" class="result-message"></div>
+        </div>
+    </main>
+    
+    <footer>
+        <div class="container">
+            <p class="footer-links">
+                <a href="#" target="_blank">About</a>
+                <a href="https://t.me/Verifiabledata" target="_blank">Telegram</a>
+                <a href="https://x.com/shamsuddeein" target="_blank">Twitter</a>
+            </p>
+            <p style="margin-top: 1rem;">&copy; 2026 Verifiable Data Solutions. Secured on Ethereum.</p>
+        </div>
+    </footer>
+
+    <script>
+        // --- ETHEREUM SEPOLIA TESTNET CONFIGURATION ---
+        // (For local Hardhat node, change chainId to '0x7A69' which is 31337)
+        const TARGET_NETWORK = {
+            chainId: '0xaa36a7', // Ethereum Sepolia Chain ID (11155111 in decimal)
+            chainName: 'Sepolia',
+            rpcUrls: ['https://rpc.sepolia.org'],
+            nativeCurrency: { name: 'SepoliaETH', decimals: 18, symbol: 'ETH' },
+            blockExplorerUrls: ['https://sepolia.etherscan.io']
+        };
+
+        // PASTE YOUR DEPLOYED CredentialRegistry.sol CONTRACT ADDRESS HERE
+        const NOTARY_CONTRACT_ADDRESS = '0x7e11Aa3Cbdaf563fA33fF99D0EE257a4cfa422A8';
+        
+        // ABI matching CredentialRegistry.sol
+        const NOTARY_CONTRACT_ABI = [
+            {
+                "inputs": [
+                    { "internalType": "bytes32", "name": "_docHash", "type": "bytes32" },
+                    { "internalType": "string", "name": "_studentName", "type": "string" },
+                    { "internalType": "string", "name": "_prn", "type": "string" },
+                    { "internalType": "string", "name": "_degreeTitle", "type": "string" }
+                ],
+                "name": "issueCredential",
+                "outputs": [],
+                "stateMutability": "nonpayable",
+                "type": "function"
+            },
+            {
+                "inputs": [
+                    { "internalType": "bytes32", "name": "_docHash", "type": "bytes32" }
+                ],
+                "name": "revokeCredential",
+                "outputs": [],
+                "stateMutability": "nonpayable",
+                "type": "function"
+            },
+            {
+                "inputs": [
+                    { "internalType": "bytes32", "name": "_docHash", "type": "bytes32" }
+                ],
+                "name": "verifyCredential",
+                "outputs": [
+                    { "internalType": "bool", "name": "exists", "type": "bool" },
+                    { "internalType": "string", "name": "studentName", "type": "string" },
+                    { "internalType": "string", "name": "prn", "type": "string" },
+                    { "internalType": "string", "name": "degreeTitle", "type": "string" },
+                    { "internalType": "uint256", "name": "issuedAt", "type": "uint256" },
+                    { "internalType": "address", "name": "issuedBy", "type": "address" },
+                    { "internalType": "bool", "name": "isRevoked", "type": "bool" }
+                ],
+                "stateMutability": "view",
+                "type": "function"
+            }
+        ];
+
+        // --- DOM ELEMENTS ---
+        const connectWalletBtn = document.getElementById('connect-wallet-btn');
+        const walletInfo = document.getElementById('wallet-info');
+        const configWarning = document.getElementById('config-warning');
+        const networkWarning = document.getElementById('network-warning');
+        const currentNetwork = document.getElementById('current-network');
+        
+        // Issue / Notarize elements
+        const studentNameInput = document.getElementById('student-name');
+        const studentPrnInput = document.getElementById('student-prn');
+        const degreeTitleInput = document.getElementById('degree-title');
+        const uploadBoxNotarize = document.getElementById('upload-box-notarize');
+        const uploadTextNotarize = document.getElementById('upload-text-notarize');
+        const fileInputNotarize = document.getElementById('file-input-notarize');
+        const loaderNotarize = document.getElementById('loader-notarize');
+        const resultMessageNotarize = document.getElementById('result-message-notarize');
+        
+        // Verify elements
+        const uploadBoxVerify = document.getElementById('upload-box-verify');
+        const uploadTextVerify = document.getElementById('upload-text-verify');
+        const fileInputVerify = document.getElementById('file-input-verify');
+        const loaderVerify = document.getElementById('loader-verify');
+        const resultMessageVerify = document.getElementById('result-message-verify');
+
+        // Revoke elements
+        const uploadBoxRevoke = document.getElementById('upload-box-revoke');
+        const uploadTextRevoke = document.getElementById('upload-text-revoke');
+        const fileInputRevoke = document.getElementById('file-input-revoke');
+        const loaderRevoke = document.getElementById('loader-revoke');
+        const resultMessageRevoke = document.getElementById('result-message-revoke');
+        
+        // Tabs
+        const tabs = document.querySelectorAll('.tab');
+        const tabContents = document.querySelectorAll('.tab-content');
+        
+        let provider, signer, contract;
+        
+        // --- FUNCTIONS ---
+
+        function checkConfiguration() {
+            if (!ethers.isAddress(NOTARY_CONTRACT_ADDRESS)) {
+                configWarning.style.display = 'block';
+                return false;
+            }
+            configWarning.style.display = 'none';
+            return true;
+        }
+
+        async function connectWallet() {
+            if (typeof window.ethereum === 'undefined') { 
+                return alert('Please install MetaMask!'); 
+            }
+            try {
+                await window.ethereum.request({ method: 'eth_requestAccounts' });
+                provider = new ethers.BrowserProvider(window.ethereum);
+                signer = await provider.getSigner();
+                
+                setupEventListeners();
+                await handleConnection();
+            } catch (error) {
+                console.error("Failed to connect wallet:", error);
+                alert("Failed to connect wallet. Please try again.");
+            }
+        }
+        
+        function disconnectWallet() {
+            provider = null;
+            signer = null;
+            contract = null;
+            updateUI(false);
+        }
+
+        async function handleConnection() {
+            if (!signer) return;
+            await checkNetwork();
+            updateUI(true);
+        }
+
+        async function checkNetwork() {
+            if (!provider) return;
+            try {
+                const network = await provider.getNetwork();
+                currentNetwork.textContent = `${network.name} (Chain ID: ${network.chainId})`;
+                
+                if (network.chainId !== BigInt(TARGET_NETWORK.chainId)) {
+                    networkWarning.style.display = 'block';
+                    await switchToTargetNetwork();
+                } else {
+                    networkWarning.style.display = 'none';
+                }
+            } catch (error) {
+                console.error("Error checking network:", error);
+                currentNetwork.textContent = 'Error checking network';
+            }
+        }
+
+        async function switchToTargetNetwork() {
+            try {
+                await window.ethereum.request({ 
+                    method: 'wallet_switchEthereumChain', 
+                    params: [{ chainId: TARGET_NETWORK.chainId }] 
+                });
+            } catch (switchError) {
+                if (switchError.code === 4902) {
+                    try {
+                        await window.ethereum.request({ 
+                            method: 'wallet_addEthereumChain', 
+                            params: [TARGET_NETWORK] 
+                        });
+                    } catch (addError) {
+                        console.error("Failed to add network:", addError);
+                    }
+                } else {
+                    console.error("Failed to switch network:", switchError);
+                }
+            }
+        }
+        
+        async function isCorrectNetwork() {
+            if (!signer) return false;
+            try {
+                const network = await provider.getNetwork();
+                return network.chainId === BigInt(TARGET_NETWORK.chainId);
+            } catch (error) {
+                console.error("Error checking network:", error);
+                return false;
+            }
+        }
+
+        async function updateUI(isConnected) {
+            const allBoxes = [uploadBoxNotarize, uploadBoxVerify, uploadBoxRevoke];
+            const allFileInputs = [fileInputNotarize, fileInputVerify, fileInputRevoke];
+            const allTextInputs = [studentNameInput, studentPrnInput, degreeTitleInput];
+
+            if (isConnected && signer) {
+                try {
+                    const address = await signer.getAddress();
+                    const network = await provider.getNetwork();
+                    
+                    walletInfo.innerHTML = `<span>${address.substring(0, 6)}...${address.substring(address.length - 4)}</span><br><small>${network.name}</small>`;
+                    connectWalletBtn.textContent = 'Disconnect';
+                    connectWalletBtn.className = 'btn btn-red';
+
+                    if (!checkConfiguration()) return;
+                    
+                    const correctNetwork = await isCorrectNetwork();
+                    if (correctNetwork) {
+                        allBoxes.forEach(box => box.classList.remove('disabled'));
+                        allFileInputs.forEach(input => input.disabled = false);
+                        allTextInputs.forEach(input => input.disabled = false);
+
+                        uploadTextNotarize.innerHTML = 'Fill student details above, then Drag & Drop certificate or <strong>click to select</strong>.';
+                        uploadTextVerify.innerHTML = 'Drag & Drop your certificate here, or <strong>click to select a file</strong>.';
+                        uploadTextRevoke.innerHTML = 'Drag & Drop certificate to revoke, or <strong>click to select a file</strong>.';
+                        
+                        contract = new ethers.Contract(NOTARY_CONTRACT_ADDRESS, NOTARY_CONTRACT_ABI, signer);
+                    } else {
+                        allBoxes.forEach(box => box.classList.add('disabled'));
+                        allFileInputs.forEach(input => input.disabled = true);
+                        allTextInputs.forEach(input => input.disabled = true);
+
+                        uploadTextNotarize.textContent = 'Please switch to Ethereum Sepolia Testnet';
+                        uploadTextVerify.textContent = 'Please switch to Ethereum Sepolia Testnet';
+                        uploadTextRevoke.textContent = 'Please switch to Ethereum Sepolia Testnet';
+                    }
+                } catch (error) {
+                    console.error("Error updating UI:", error);
+                }
+            } else {
+                walletInfo.innerHTML = `<span>Wallet not connected</span>`;
+                connectWalletBtn.textContent = 'Connect';
+                connectWalletBtn.className = 'btn btn-blue';
+                currentNetwork.textContent = 'Not connected';
+
+                allBoxes.forEach(box => box.classList.add('disabled'));
+                allFileInputs.forEach(input => input.disabled = true);
+                allTextInputs.forEach(input => input.disabled = true);
+
+                uploadTextNotarize.textContent = 'Connect your wallet to begin';
+                uploadTextVerify.textContent = 'Connect your wallet to begin';
+                uploadTextRevoke.textContent = 'Connect your wallet to begin';
+                
+                networkWarning.style.display = 'none';
+            }
+        }
+        
+        async function calculateHash(file) {
+            const buffer = await file.arrayBuffer();
+            const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return '0x' + hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+
+        async function handleNotarizeUpload(file) {
+            if (!await isCorrectNetwork()) {
+                return alert('Please switch your wallet to Ethereum Sepolia Testnet to continue.');
+            }
+
+            const studentName = studentNameInput.value.trim();
+            const studentPrn = studentPrnInput.value.trim();
+            const degreeTitle = degreeTitleInput.value.trim();
+
+            if (!studentName || !studentPrn || !degreeTitle) {
+                fileInputNotarize.value = '';
+                return displayResult('error', '⚠️ Please fill in <strong>Student Name</strong>, <strong>PRN</strong>, and <strong>Degree Title</strong> before uploading the certificate.', 'notarize');
+            }
+            
+            loaderNotarize.style.display = 'block';
+            resultMessageNotarize.style.display = 'none';
+            
+            try {
+                const hashHex = await calculateHash(file);
+
+                // Check if document is already registered
+                const existing = await contract.verifyCredential(hashHex);
+                if (existing[0]) {
+                    throw new Error(`This document was already issued to ${existing[1]} (PRN: ${existing[2]}) on ${new Date(Number(existing[4]) * 1000).toLocaleString()}`);
+                }
+
+                // Issue credential with metadata
+                const tx = await contract.issueCredential(hashHex, studentName, studentPrn, degreeTitle);
+                displayResult('info', `Transaction sent... waiting for block confirmation.<br>TX Hash: <a href="${TARGET_NETWORK.blockExplorerUrls[0]}/tx/${tx.hash}" target="_blank">${tx.hash}</a>`, 'notarize');
+                
+                await tx.wait();
+
+                displayResult('success', `
+                    ✅ <strong>Credential Issued On-Chain!</strong>
+                    <div class="cred-details">
+                        <strong>Student:</strong> ${studentName} (${studentPrn})<br>
+                        <strong>Degree:</strong> ${degreeTitle}<br>
+                        <strong>SHA-256 Hash:</strong> <small>${hashHex}</small><br>
+                        <strong>Tx Hash:</strong> <a href="${TARGET_NETWORK.blockExplorerUrls[0]}/tx/${tx.hash}" target="_blank">${tx.hash}</a>
+                    </div>
+                `, 'notarize');
+
+                // Clear inputs after success
+                studentNameInput.value = '';
+                studentPrnInput.value = '';
+                degreeTitleInput.value = '';
+
+            } catch (error) {
+                console.error("Issuance failed:", error);
+                if (error.message && error.message.includes('user rejected')) {
+                    displayResult('error', 'Transaction was rejected by user.', 'notarize');
+                } else {
+                    displayResult('error', `Error: ${error.reason || error.message || 'Transaction failed.'}`, 'notarize');
+                }
+            } finally {
+                loaderNotarize.style.display = 'none';
+                fileInputNotarize.value = '';
+            }
+        }
+        
+        async function handleVerifyUpload(file) {
+            if (!await isCorrectNetwork()) {
+                return alert('Please switch your wallet to Ethereum Sepolia Testnet to continue.');
+            }
+            
+            loaderVerify.style.display = 'block';
+            resultMessageVerify.style.display = 'none';
+            
+            try {
+                const hashHex = await calculateHash(file);
+                const [exists, studentName, prn, degreeTitle, issuedAt, issuedBy, isRevoked] = await contract.verifyCredential(hashHex);
+
+                if (!exists) {
+                    displayResult('error', `❌ <strong>Invalid or Tampered Document</strong><br>No matching SHA-256 hash found on the Ethereum registry.`, 'verify');
+                    return;
+                }
+
+                const verificationDate = new Date(Number(issuedAt) * 1000).toLocaleString();
+
+                if (isRevoked) {
+                    displayResult('warning', `
+                        ⚠️ <strong>Credential Revoked by Issuer</strong>
+                        <div class="cred-details">
+                            <strong>Student Name:</strong> ${studentName}<br>
+                            <strong>PRN / Roll No:</strong> ${prn}<br>
+                            <strong>Degree / Course:</strong> ${degreeTitle}<br>
+                            <strong>Originally Issued:</strong> ${verificationDate}<br>
+                            <strong>Status:</strong> REVOKED
+                        </div>
+                    `, 'verify');
+                } else {
+                    displayResult('success', `
+                        ✅ <strong>Authentic & Verified Credential</strong>
+                        <div class="cred-details">
+                            <strong>Student Name:</strong> ${studentName}<br>
+                            <strong>PRN / Roll No:</strong> ${prn}<br>
+                            <strong>Degree / Course:</strong> ${degreeTitle}<br>
+                            <strong>Issued On:</strong> ${verificationDate}<br>
+                            <strong>Issuer Wallet:</strong> <small>${issuedBy}</small>
+                        </div>
+                    `, 'verify');
+                }
+            } catch (error) {
+                console.error("Verification failed:", error);
+                displayResult('error', `Error: ${error.reason || error.message || 'Could not check verification status.'}`, 'verify');
+            } finally {
+                loaderVerify.style.display = 'none';
+                fileInputVerify.value = '';
+            }
+        }
+
+        async function handleRevokeUpload(file) {
+            if (!await isCorrectNetwork()) {
+                return alert('Please switch your wallet to Ethereum Sepolia Testnet to continue.');
+            }
+
+            loaderRevoke.style.display = 'block';
+            resultMessageRevoke.style.display = 'none';
+
+            try {
+                const hashHex = await calculateHash(file);
+                const tx = await contract.revokeCredential(hashHex);
+                
+                displayResult('info', `Revocation transaction sent... waiting for confirmation.<br>TX Hash: <a href="${TARGET_NETWORK.blockExplorerUrls[0]}/tx/${tx.hash}" target="_blank">${tx.hash}</a>`, 'revoke');
+                await tx.wait();
+
+                displayResult('warning', `
+                    ⚠️ <strong>Credential Marked as Revoked</strong>
+                    <div class="cred-details">
+                        <strong>Document Hash:</strong> <small>${hashHex}</small><br>
+                        <strong>Tx Hash:</strong> <a href="${TARGET_NETWORK.blockExplorerUrls[0]}/tx/${tx.hash}" target="_blank">${tx.hash}</a>
+                    </div>
+                `, 'revoke');
+            } catch (error) {
+                console.error("Revocation failed:", error);
+                if (error.message && error.message.includes('user rejected')) {
+                    displayResult('error', 'Transaction was rejected by user.', 'revoke');
+                } else {
+                    displayResult('error', `Error: ${error.reason || error.message || 'Revocation failed.'}`, 'revoke');
+                }
+            } finally {
+                loaderRevoke.style.display = 'none';
+                fileInputRevoke.value = '';
+            }
+        }
+        
+        function displayResult(type, message, context) {
+            let resultBox;
+            if (context === 'notarize') resultBox = resultMessageNotarize;
+            else if (context === 'verify') resultBox = resultMessageVerify;
+            else resultBox = resultMessageRevoke;
+
+            resultBox.style.display = 'block';
+            resultBox.className = `result-message ${type}`;
+            resultBox.innerHTML = message;
+        }
+        
+        function setupEventListeners() {
+            if (window.ethereum) {
+                window.ethereum.on('accountsChanged', async (accounts) => {
+                    if (accounts.length > 0) {
+                        provider = new ethers.BrowserProvider(window.ethereum);
+                        signer = await provider.getSigner();
+                        updateUI(true);
+                    } else {
+                        disconnectWallet();
+                    }
+                });
+                
+                window.ethereum.on('chainChanged', () => {
+                    window.location.reload();
+                });
+            }
+        }
+
+        // --- INITIALIZATION ---
+        connectWalletBtn.addEventListener('click', () => {
+            signer ? disconnectWallet() : connectWallet();
+        });
+        
+        // Tabs
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                tabs.forEach(item => item.classList.remove('active'));
+                tab.classList.add('active');
+                tabContents.forEach(content => content.classList.remove('active'));
+                document.getElementById(`${tab.dataset.tab}-content`).classList.add('active');
+            });
+        });
+
+        // File inputs and drag/drop
+        setupFileUploadListeners();
+
+        function setupFileUploadListeners() {
+            // Issue / Notarize tab
+            uploadBoxNotarize.addEventListener('click', () => { 
+                if (!fileInputNotarize.disabled) fileInputNotarize.click(); 
+            });
+            fileInputNotarize.addEventListener('change', (e) => { 
+                if (e.target.files[0]) handleNotarizeUpload(e.target.files[0]); 
+            });
+            setupDragAndDrop(uploadBoxNotarize, fileInputNotarize, handleNotarizeUpload);
+
+            // Verify tab
+            uploadBoxVerify.addEventListener('click', () => { 
+                if (!fileInputVerify.disabled) fileInputVerify.click(); 
+            });
+            fileInputVerify.addEventListener('change', (e) => { 
+                if (e.target.files[0]) handleVerifyUpload(e.target.files[0]); 
+            });
+            setupDragAndDrop(uploadBoxVerify, fileInputVerify, handleVerifyUpload);
+
+            // Revoke tab
+            uploadBoxRevoke.addEventListener('click', () => { 
+                if (!fileInputRevoke.disabled) fileInputRevoke.click(); 
+            });
+            fileInputRevoke.addEventListener('change', (e) => { 
+                if (e.target.files[0]) handleRevokeUpload(e.target.files[0]); 
+            });
+            setupDragAndDrop(uploadBoxRevoke, fileInputRevoke, handleRevokeUpload);
+        }
+
+        function setupDragAndDrop(uploadBox, fileInput, handler) {
+            uploadBox.addEventListener('dragover', (e) => { 
+                if (!fileInput.disabled) { 
+                    e.preventDefault(); 
+                    uploadBox.style.borderColor = uploadBox.classList.contains('revoke-box') ? 'var(--error-red)' : 'var(--accent-green)'; 
+                } 
+            });
+            
+            uploadBox.addEventListener('dragleave', (e) => { 
+                if (!fileInput.disabled) uploadBox.style.borderColor = 'var(--text-secondary)'; 
+            });
+            
+            uploadBox.addEventListener('drop', (e) => { 
+                if (!fileInput.disabled) { 
+                    e.preventDefault(); 
+                    uploadBox.style.borderColor = 'var(--text-secondary)'; 
+                    if (e.dataTransfer.files[0]) handler(e.dataTransfer.files[0]); 
+                } 
+            });
+        }
+
+        // Initial check on page load
+        checkConfiguration();
+
+        // Check for existing wallet connection on page load
+        if (typeof window.ethereum !== 'undefined') {
+            window.ethereum.request({ method: 'eth_accounts' })
+                .then(accounts => {
+                    if (accounts.length > 0) {
+                        connectWallet();
+                    }
+                })
+                .catch(console.error);
+        }
+    </script>
+</body>
+</html> 
